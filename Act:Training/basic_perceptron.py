@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 class Perceptron:
-    def __init__(self, epochs):
+    def __init__(self, epochs, use_svm = False):
         self.bias = 0
         self.weights = None
         self.epochs = epochs
@@ -23,7 +23,7 @@ class Perceptron:
         return self.activation_funtion(weighted_input)
         
     def stochastic_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
-        lr = learning_rate
+        alpha = learning_rate
         number_indexes = train.shape[0]
         number_features = train.shape[1]
         self.weights = 2*np.random.rand(number_features)-1
@@ -32,7 +32,7 @@ class Perceptron:
             indexes = np.random.permutation(number_indexes)
             for index in indexes:
                 curr_pred = self.predict(train[index, :])
-                self.weights = self.weights + lr*(validate[index]-curr_pred)*train[index, :]
+                self.weights = self.weights + alpha*(validate[index]-curr_pred)*train[index, :]
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
                 acc = accuracy_score(y_test,test_prediction)
@@ -44,26 +44,60 @@ class Perceptron:
             plt.title("Accuracy vs Epochs")
             plt.xlabel("Epochs")
             plt.ylabel("Acurracy")
-            plt.savefig("./out/single_neuro_stochastic.png")
+            plt.savefig("./out/single_neuron_stochastic.png")
             plt.show()
         return self.weights, self.bias
     
-    def batch_gradient_descent(self, train, validate):
+    def batch_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
+        alpha = learning_rate
+        number_indexes = train.shape[0]
         number_features = train.shape[1]
-        self.weights = np.zeros(number_features)
-        for i in range(self.epochs):
-            for data in range(len(train)):
-                weighted_input = np.dot(train,self.weights) + self.bias
-                prediction = self.activation_funtion(weighted_input)
+        self.weights = 2*np.random.rand(number_features)-1
+        accuracy = []
+        for epoch in range(self.epochs):
+            indexes = np.random.permutation(number_indexes)
+            for index in indexes:
+                curr_pred = self.predict(train[index, :])
+                self.weights = self.weights + alpha*(validate[index]-curr_pred)*train[index, :]
+            if x_test is not None and y_test is not None:
+                test_prediction = self.predict(x_test)
+                acc = accuracy_score(y_test,test_prediction)
+                accuracy.append(acc)
+        if x_test is not None and y_test is not None:
+            #Display accuracy
+            accuracy = np.array(accuracy)
+            plt.plot(np.arange(self.epochs), accuracy)
+            plt.title("Accuracy vs Epochs")
+            plt.xlabel("Epochs")
+            plt.ylabel("Acurracy")
+            plt.savefig("./out/single_neuron_batch.png")
+            plt.show()
         return self.weights, self.bias
     
-    def mini_gradient_descent(self, train, validate):
+    def mini_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
+        alpha = learning_rate
+        number_indexes = train.shape[0]
         number_features = train.shape[1]
-        self.weights = np.zeros(number_features)
-        for i in range(self.epochs):
-            for data in range(len(train)):
-                weighted_input = np.dot(train,self.weights) + self.bias
-                prediction = self.activation_funtion(weighted_input)
+        self.weights = 2*np.random.rand(number_features)-1
+        accuracy = []
+        for epoch in range(self.epochs):
+            indexes = np.random.permutation(number_indexes)
+            for index in indexes:
+                curr_pred = self.predict(train[index, :])
+                self.weights = self.weights + alpha*(validate[index]-curr_pred)*train[index, :]
+            if x_test is not None and y_test is not None:
+                test_prediction = self.predict(x_test)
+                acc = accuracy_score(y_test,test_prediction)
+                accuracy.append(acc)
+        if x_test is not None and y_test is not None:
+            #Display accuracy
+            accuracy = np.array(accuracy)
+            plt.plot(np.arange(self.epochs), accuracy)
+            plt.title("Accuracy vs Epochs")
+            plt.xlabel("Epochs")
+            plt.ylabel("Acurracy")
+            plt.savefig("./out/single_neuron_mini_batch.png")
+            plt.show()
         return self.weights, self.bias
             
     def train(self,training_type ,train, validate,x_test = None,y_test = None ,learning_rate = 0.001):
