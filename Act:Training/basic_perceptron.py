@@ -47,7 +47,7 @@ class Perceptron:
             plt.title("Cost vs Epochs (SVM)")
             plt.savefig(f"./out/cost_{type}_svm.png")
         else: 
-            plt.title("Accuracy vs Epochs")
+            plt.title("Cost vs Epochs")
             plt.savefig(f"./out/cost_{type}.png")
         plt.show()
 
@@ -137,4 +137,4 @@ if __name__ == "__main__":
     y = data[:,0]
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
     model = Perceptron(300,False)
-    model.train('batch',X_train,y_train,X_test,y_test,0.001)
+    model.train('stochastic',X_train,y_train,X_test,y_test,0.001)
