@@ -136,5 +136,5 @@ if __name__ == "__main__":
     x = data[:,1:-1]
     y = data[:,0]
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
-    model = Perceptron(300,False)
-    model.train('stochastic',X_train,y_train,X_test,y_test,0.001)
+    model = Perceptron(300,True)
+    model.train('batch',X_train,y_train,X_test,y_test,0.001)
