@@ -8,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
 
 class Perceptron:
     def __init__(self, epochs, use_svm = False):
@@ -19,12 +20,19 @@ class Perceptron:
         weighted_input = np.dot(input, self.weights)
         return np.sign(weighted_input)
     
-    def mse_cost(self,predition,truth):
-        return np.mean((np.square(truth-predition)))
+    def kfold_accuracy(self, x, y):
+        kf = KFold()
+        accuracy = 0
+        for i, (train_index, test_index) in enumerate(kf.split(x)):
+            X_test = [x[index] for index in test_index]
+            y_test = [y[index] for index in test_index]
+            y_pred = self.predict(X_test)
+            accuracy += accuracy_score(y_test, y_pred)
+        accuracy = accuracy/kf.get_n_splits()
+        return accuracy
     
-    def display_metrics(self,cost,accur,type):
+    def display_metrics(self,err,accur,type):
         accuracy = np.array(accur)
-        costs = np.array(cost)
         plt.figure(1)
         plt.plot(np.arange(self.epochs), accuracy)
         plt.xlabel("Epochs")
@@ -35,16 +43,18 @@ class Perceptron:
         else: 
             plt.title("Accuracy vs Epochs")
             plt.savefig(f"./out/single_neuron_{type}.png")
+        
         plt.figure(2)
-        plt.plot(np.arange(self.epochs), costs)
+        err = np.array(err)
+        plt.plot(np.arange(self.epochs), err)
         plt.xlabel("Epochs")
-        plt.ylabel("Cost")
+        plt.ylabel("Error")
         if(self.use_svm):
-            plt.title("Cost vs Epochs (SVM)")
-            plt.savefig(f"./out/cost_{type}_svm.png")
+            plt.title("Error vs Epochs (SVM)")
+            plt.savefig(f"./out/error_{type}_svm.png")
         else: 
-            plt.title("Cost vs Epochs")
-            plt.savefig(f"./out/cost_{type}.png")
+            plt.title("Error vs Epochs")
+            plt.savefig(f"./out/error_{type}.png")
         plt.show()
 
     def stochastic_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
@@ -54,7 +64,7 @@ class Perceptron:
         number_features = train.shape[1]
         self.weights = 2*np.random.rand(number_features)-1
         accuracy = []
-        costs    = []
+        error = []
         for epoch in range(self.epochs):
             indexes = np.random.permutation(number_indexes)
             for index in indexes:
@@ -66,11 +76,11 @@ class Perceptron:
                     self.weights = self.weights + alpha*(validate[index]-curr_pred)*train[index, :]
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
-                acc = accuracy_score(y_test,test_prediction)
+                acc = self.kfold_accuracy(x_test,y_test)
                 accuracy.append(acc)
-                costs.append(self.mse_cost(test_prediction,y_test))
+                error.append(1-acc)
         if x_test is not None and y_test is not None:
-            self.display_metrics(costs,accuracy,'stochastic')
+            self.display_metrics(error,accuracy,'stochastic')
         return self.weights
     
     def batch_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
@@ -80,7 +90,7 @@ class Perceptron:
         number_features = train.shape[1]
         self.weights = np.ones(shape=(number_features))
         accuracy = []
-        costs    = []
+        error = []
         for epoch in range(self.epochs):
             w = 0
             for index in range(number_indexes):
@@ -93,11 +103,11 @@ class Perceptron:
             self.weights += alpha*w            
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
-                acc = accuracy_score(y_test,test_prediction)
+                acc = self.kfold_accuracy(x_test,y_test)
                 accuracy.append(acc)
-                costs.append(self.mse_cost(test_prediction,y_test))
+                error.append(1-acc)
         if x_test is not None and y_test is not None:
-            self.display_metrics(costs,accuracy,'batch')
+            self.display_metrics(error,accuracy,'batch')
         return self.weights
     
     def mini_gradient_descent(self, train, validate, x_test, y_test, learning_rate, batch_size):
@@ -106,7 +116,7 @@ class Perceptron:
         number_features = train.shape[1]
         self.weights = np.ones(shape=(number_features))
         accuracy = []
-        costs = []
+        error = []
         n = 0
         for epoch in range(self.epochs):
             w = 0
@@ -120,12 +130,12 @@ class Perceptron:
             self.weights += alpha*w
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
-                acc = accuracy_score(y_test,test_prediction)
+                acc = self.kfold_accuracy(x_test,y_test)
                 accuracy.append(acc)
-                costs.append(self.mse_cost(test_prediction,y_test))
+                error.append(1-acc)
             n = n + batch_size if n + batch_size > number_indexes else 0
         if x_test is not None and y_test is not None:
-            self.display_metrics(costs,accuracy,'mini_batch')
+            self.display_metrics(error,accuracy,'mini_batch')
         return self.weights
             
     def train(self,training_type ,train, validate,x_test = None,y_test = None ,learning_rate = 0.001):
@@ -141,6 +151,6 @@ if __name__ == "__main__":
     for i in range(len(y)):
         y[i] = (y[i] - 1.5)*2
     
-    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
-    model = Perceptron(400,True)
-    model.train('mini_batch',X_train,y_train,X_test,y_test,0.001) 
+    X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+    model = Perceptron(400,False)
+    model.train('stochastic',X_train,y_train,X_test,y_test,0.001) 
