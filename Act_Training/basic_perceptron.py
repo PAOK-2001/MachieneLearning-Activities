@@ -11,17 +11,13 @@ from sklearn.metrics import accuracy_score
 
 class Perceptron:
     def __init__(self, epochs, use_svm = False):
-        self.bias = 0
         self.weights = None
         self.epochs = epochs
         self.use_svm = use_svm
-
-    def activation_funtion(self, input):
-        return np.heaviside(input,0)
         
     def predict(self,input):
-        weighted_input = np.dot(input, self.weights) + self.bias
-        return self.activation_funtion(weighted_input)
+        weighted_input = np.dot(input, self.weights)
+        return np.sign(weighted_input)
     
     def mse_cost(self,predition,truth):
         return np.mean((np.square(truth-predition)))
@@ -75,21 +71,26 @@ class Perceptron:
                 costs.append(self.mse_cost(test_prediction,y_test))
         if x_test is not None and y_test is not None:
             self.display_metrics(costs,accuracy,'stochastic')
-        return self.weights, self.bias
+        return self.weights
     
     def batch_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
+        print(f"Starting training with {self.epochs} epochs and batch_gradient_descent")
         alpha = learning_rate
+        number_indexes = train.shape[0]
         number_features = train.shape[1]
         self.weights = np.ones(shape=(number_features))
         accuracy = []
         costs    = []
         for epoch in range(self.epochs):
-            pred = self.predict(train)
-            if(self.use_svm):
-                if validate*pred < 1:
-                    self.weights = self.weights + alpha*validate*train
-            elif(not self.use_svm):
-                self.weights = self.weights + alpha* np.dot((validate-pred),train)
+            w = 0
+            for index in range(number_indexes):
+                pred = self.predict(train[index, :])
+                if(self.use_svm):
+                    if validate[index]*pred < 1:
+                        w += (validate[index]*train[index, :])
+                else:
+                    w += ((validate[index]-pred)*train[index, :])
+            self.weights += alpha*w            
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
                 acc = accuracy_score(y_test,test_prediction)
@@ -97,44 +98,49 @@ class Perceptron:
                 costs.append(self.mse_cost(test_prediction,y_test))
         if x_test is not None and y_test is not None:
             self.display_metrics(costs,accuracy,'batch')
-        return self.weights, self.bias
+        return self.weights
     
-    def mini_gradient_descent(self, train, validate, x_test, y_test, learning_rate):
+    def mini_gradient_descent(self, train, validate, x_test, y_test, learning_rate, batch_size):
         alpha = learning_rate
         number_indexes = train.shape[0]
         number_features = train.shape[1]
-        self.weights = 2*np.random.rand(number_features)-1
+        self.weights = np.ones(shape=(number_features))
         accuracy = []
+        costs = []
+        n = 0
         for epoch in range(self.epochs):
-            indexes = np.random.permutation(number_indexes)
-            for index in indexes:
-                curr_pred = self.predict(train[index, :])
-                self.weights = self.weights + alpha*(validate[index]-curr_pred)*train[index, :]
+            w = 0
+            for index in range(n,n+batch_size):
+                pred = self.predict(train[index, :])
+                if (self.use_svm):
+                    if validate[index]*pred < 1:
+                        w += (validate[index]*train[index, :])
+                else:
+                    w += ((validate[index]-pred)*train[index, :])
+            self.weights += alpha*w
             if x_test is not None and y_test is not None:
                 test_prediction = self.predict(x_test)
                 acc = accuracy_score(y_test,test_prediction)
                 accuracy.append(acc)
+                costs.append(self.mse_cost(test_prediction,y_test))
+            n = n + batch_size if n + batch_size > number_indexes else 0
         if x_test is not None and y_test is not None:
-            #Display accuracy
-            accuracy = np.array(accuracy)
-            plt.plot(np.arange(self.epochs), accuracy)
-            plt.title("Accuracy vs Epochs")
-            plt.xlabel("Epochs")
-            plt.ylabel("Acurracy")
-            plt.savefig("./out/single_neuron_mini_batch.png")
-            plt.show()
-        return self.weights, self.bias
+            self.display_metrics(costs,accuracy,'mini_batch')
+        return self.weights
             
     def train(self,training_type ,train, validate,x_test = None,y_test = None ,learning_rate = 0.001):
         if(training_type == 'stochastic'): return self.stochastic_gradient_descent(train, validate, x_test, y_test, learning_rate)
         if(training_type == 'batch'): return self.batch_gradient_descent(train, validate, x_test, y_test, learning_rate)
-        if(training_type == 'mini_batch'): return self.mini_gradient_descent(train, validate, x_test, y_test, learning_rate)
+        if(training_type == 'mini_batch'): return self.mini_gradient_descent(train, validate, x_test, y_test, learning_rate, batch_size=111)
 
 if __name__ == "__main__":
     path = './data/misterious_data_1.txt'
     data = np.loadtxt(path)
     x = data[:,1:-1]
     y = data[:,0]
+    for i in range(len(y)):
+        y[i] = (y[i] - 1.5)*2
+    
     X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.3, random_state=42)
-    model = Perceptron(300,True)
-    model.train('batch',X_train,y_train,X_test,y_test,0.001)
+    model = Perceptron(400,True)
+    model.train('mini_batch',X_train,y_train,X_test,y_test,0.001) 
