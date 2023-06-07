@@ -35,7 +35,7 @@ def train_MLP_regression_diabetes():
     MLP.fit(X_train, y_train)
     pred = MLP.predict(X_test)
     r_squared = MLP.score(X_test, y_test)
-    mse = np.sqrt(mean_squared_error(y_test, pred))
+    mse = mean_squared_error(y_test, pred)
     print(f"R2: {r_squared}")
     print(f"MSE: {mse}")
 
