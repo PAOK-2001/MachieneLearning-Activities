@@ -25,7 +25,7 @@ def MLP_from_size(neurons_per_layer,layers):
     data, target = load_wine(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=42)
     MLP.fit(X_train, y_train)
-    accuracy = kfold_accuracy(data, target, MLP)
+    accuracy = kfold_accuracy(X_test, y_test, MLP)
     print(f"MLP with {layers} layers/ {neurons_per_layer} neurons each")
     print('Accuracy: {:.2f}'.format(accuracy))
     return accuracy
@@ -36,11 +36,11 @@ def MLP_from_regulator(regulator):
     data, target = load_wine(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=42)
     MLP.fit(X_train, y_train)
-    accuracy = kfold_accuracy(data, target, MLP)
+    accuracy = kfold_accuracy(X_test, y_test, MLP)
     return accuracy
 
 if __name__ == "__main__":
-    neurons = 20
+    neurons = 5
     test_sizes = np.arange(2,200,2)
     print(test_sizes)
     acc = []
