@@ -40,9 +40,8 @@ def MLP_from_regulator(regulator):
     return accuracy
 
 if __name__ == "__main__":
-    neurons = 5
+    neurons = 20
     test_sizes = np.arange(2,200,2)
-    print(test_sizes)
     acc = []
     for size in test_sizes:
         accuracy = MLP_from_size(neurons,size)

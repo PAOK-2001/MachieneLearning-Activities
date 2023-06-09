@@ -30,7 +30,7 @@ if __name__ == "__main__":
     optimizer = GridSearchCV(estimator=regressor, param_grid= param_grid, n_jobs=-1, cv=cross_validator, scoring="neg_mean_squared_error")
     hyper_parameters = optimizer.fit(X_train, y_train)
     best_regressor = hyper_parameters.best_estimator_
-    print("--- HYPERPARAMER TUNNED ---")
+    print("--- HYPER-PARAMETER TUNNED ---")
     print("R2: {:.2f}".format(best_regressor.score(X_test, y_test)))
     pred = best_regressor.predict(X_test)
     print("M.S.E: {:.2f}".format(mean_squared_error(y_test, pred)))
